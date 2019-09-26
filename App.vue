@@ -6,8 +6,10 @@
 
 <script>
 import * as THREE from 'three'
-import { loadObjects } from 'vue-three-wrap/extras/load-gltf/'
+import loadScene from 'vue-three-wrap/extras/load-gltf/'
 import VueThreeWrap from 'vue-three-wrap'
+
+const ref = {}
 
 export default {
     components: {
@@ -15,20 +17,34 @@ export default {
     },
     methods: {
         async start({ scene, camera, renderer }) {
-            const objects = await loadObjects('/camera-track.glb')
+            const loadedScene = await loadScene('/camera-track.glb')
+            const objects = Array.from(loadedScene.scene.children)
 
             objects.forEach(obj => {
                 scene.add(obj)
             })
 
+            ref.mixer = new THREE.AnimationMixer(objects[1])
+            loadedScene.animations.forEach(clip => {
+                ref.mixer.clipAction(clip).play()
+            })
+
+            ref.cameraPos = objects[1]
+
             // add some lighting
             this.prepLighting(scene)
 
             // place and rotate the camera
-            camera.position.set(-4, 4, 4)
+            camera.position.set(-10, 4, 4)
             camera.lookAt(new THREE.Vector3(0, 0, 0))
         },
-        update() {},
+        update({ camera }) {
+            if (ref.mixer) {
+                ref.mixer.update(0.0166 * 0.1)
+                camera.position.copy(ref.cameraPos.position)
+                camera.lookAt(new THREE.Vector3(0, 0, 0))
+            }
+        },
         prepLighting(scene) {
             // some nice lighting
             const output = {}
