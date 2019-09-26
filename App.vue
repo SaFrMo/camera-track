@@ -24,33 +24,38 @@ export default {
                 scene.add(obj)
             })
 
-            ref.mixer = new THREE.AnimationMixer(objects[1])
-            loadedScene.animations.forEach(clip => {
-                ref.mixer.clipAction(clip).play()
-            })
+            // attach animation mixer to icosphere
+            const icosphere = objects[1]
+            ref.mixer = new THREE.AnimationMixer(icosphere)
 
-            ref.cameraPos = objects[1]
+            // get movement animation
+            const cameraMoveAnim = loadedScene.animations[0]
+
+            // make a new AnimationAction for the movement
+            ref.mixer.clipAction(cameraMoveAnim).loop = THREE.LoopPingPong
+            ref.mixer.clipAction(cameraMoveAnim).play()
+
+            // save icosphere as camera position
+            ref.cameraPos = icosphere
 
             // add some lighting
             this.prepLighting(scene)
 
             // place and rotate the camera
-            camera.position.set(-10, 4, 4)
-            camera.lookAt(new THREE.Vector3(0, 0, 0))
+            this.positionCamera(camera)
         },
         update({ camera }) {
             if (ref.mixer) {
-                ref.mixer.update(0.0166 * 0.1)
-                camera.position.copy(ref.cameraPos.position)
-                camera.lookAt(new THREE.Vector3(0, 0, 0))
+                ref.mixer.update(0.0166 * 0.2)
             }
+            this.positionCamera(camera)
         },
         prepLighting(scene) {
             // some nice lighting
             const output = {}
 
             // Ambient light
-            output.light = new THREE.AmbientLight(0xffffff, 0.5)
+            output.light = new THREE.AmbientLight(0xffffff, 0.6)
 
             // Shadow light
             output.shadowLight = new THREE.DirectionalLight(0xffffff, 0.5)
@@ -70,6 +75,10 @@ export default {
 
             // in case we want to do anything with these later
             return output
+        },
+        positionCamera(camera) {
+            camera.position.copy(ref.cameraPos.position)
+            camera.lookAt(new THREE.Vector3(0, 0, 0))
         }
     }
 }
