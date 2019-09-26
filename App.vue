@@ -1,6 +1,10 @@
 <template>
     <main class="camera-path">
         <vue-three-wrap :start="start" :update="update" />
+
+        <div class="controls">
+            <input type="range" min="0" max="1" step="0.01" v-model="seekPos" />
+        </div>
     </main>
 </template>
 
@@ -14,6 +18,11 @@ const ref = {}
 export default {
     components: {
         'vue-three-wrap': VueThreeWrap
+    },
+    data() {
+        return {
+            seekPos: 0
+        }
     },
     methods: {
         async start({ scene, camera, renderer }) {
@@ -29,11 +38,12 @@ export default {
             ref.mixer = new THREE.AnimationMixer(icosphere)
 
             // get movement animation
-            const cameraMoveAnim = loadedScene.animations[0]
+            ref.cameraMoveAnim = loadedScene.animations[0]
 
             // make a new AnimationAction for the movement
-            ref.mixer.clipAction(cameraMoveAnim).loop = THREE.LoopPingPong
-            ref.mixer.clipAction(cameraMoveAnim).play()
+            ref.action = ref.mixer.clipAction(ref.cameraMoveAnim)
+            ref.action.loop = THREE.LoopPingPong
+            ref.action.play()
 
             // save icosphere as camera position
             ref.cameraPos = icosphere
@@ -43,10 +53,17 @@ export default {
 
             // place and rotate the camera
             this.positionCamera(camera)
+
+            // setInterval(() => {
+            //     ref.action.time = Math.abs(Math.sin(Date.now() * 0.001))
+            // }, 1000 / 12)
         },
         update({ camera }) {
+            if (ref.action) {
+                ref.action.time = this.seekPos * ref.cameraMoveAnim.duration
+            }
             if (ref.mixer) {
-                ref.mixer.update(0.0166 * 0.2)
+                ref.mixer.update(0)
             }
             this.positionCamera(camera)
         },
@@ -66,7 +83,6 @@ export default {
             // Backlight
             output.backLight = new THREE.DirectionalLight(0xffffff, 0.2)
             output.backLight.position.set(-100, 200, 50)
-            // output.backLight.castShadow = true
 
             // Add lights
             scene.add(output.backLight)
@@ -77,8 +93,10 @@ export default {
             return output
         },
         positionCamera(camera) {
-            camera.position.copy(ref.cameraPos.position)
-            camera.lookAt(new THREE.Vector3(0, 0, 0))
+            if (ref.cameraPos) {
+                camera.position.copy(ref.cameraPos.position)
+                camera.lookAt(new THREE.Vector3(0, 0, 0))
+            }
         }
     }
 }
@@ -92,5 +110,13 @@ export default {
     right: 0;
     bottom: 0;
     left: 0;
+
+    .controls {
+        position: absolute;
+        right: 0;
+        left: 0;
+        display: flex;
+        justify-content: center;
+    }
 }
 </style>
