@@ -14,7 +14,7 @@
         "@vue/cli": "^3.11.0",
         "node-sass": "^4.12.0",
         "sass-loader": "^8.0.0",
-        "three": "^0.108.0",
+        "three": "^0.137.0",
         "vue-three-wrap": "^3.2.4"
     }
 }
